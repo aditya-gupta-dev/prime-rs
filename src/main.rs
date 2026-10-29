@@ -1,29 +1,27 @@
-use std::{os::unix::process::CommandExt};
-
 fn main() {
-    let offload_param ="__NV_PRIME_RENDER_OFFLOAD"; 
-    let lib_param = "__GLX_VENDOR_LIBRARY_NAME"; 
+    let offload_param = "__NV_PRIME_RENDER_OFFLOAD";
+    let lib_param = "__GLX_VENDOR_LIBRARY_NAME";
 
     let args = std::env::args().collect::<Vec<_>>();
 
     if args.len() < 2 {
-        println!("Please provide a command to be offloaded to nvidia GPU."); 
-        return; 
+        println!("Please provide a command to be offloaded to nvidia GPU.");
+        return;
     }
 
-    let mut command = std::process::Command::new(&args[1]);  
-
-    if args.len() > 2 { 
-        command.args(&args[2..]); 
+    if args.len() > 2 {
+        let _ = std::process::Command::new(&args[1])
+            .env(offload_param, "1")
+            .env(lib_param, "nvidia")
+            .args(&args[2..])
+            .spawn()
+            .expect("failed to start the process");
+    } else {
+        let _ = std::process::Command::new(&args[1])
+            .env(offload_param, "1")
+            .env(lib_param, "nvidia")
+            .spawn()
+            .expect("failed to start the process");
     }
-
-    command.env(offload_param, "1"); 
-    command.env(lib_param, "nvidia");
-    unsafe { 
-    command.pre_exec(|| { 
-        libc::setsid(); 
-                Ok(())
-    }); 
-    } 
-    let _ = command.spawn(); 
+    std::process::exit(0);
 }
